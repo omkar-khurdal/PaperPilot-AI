@@ -1,0 +1,15 @@
+venv/
+.venv/
+env/
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.index
+*.faiss
+.rag_cache/
+uploaded_pdfs/
+*.pdf
+.streamlit/secrets.toml
+.DS_Store
+Thumbs.db
