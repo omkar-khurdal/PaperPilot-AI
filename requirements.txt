@@ -2,7 +2,7 @@ streamlit
 pymupdf
 sentence-transformers
 faiss-cpu
-ollama
+groq
 transformers
-torch
+python-dotenv
 numpy
