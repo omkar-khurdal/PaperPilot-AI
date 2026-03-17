@@ -1,7 +1,13 @@
-import ollama
+import os
+
+from dotenv import load_dotenv
+from groq import Groq
+
+load_dotenv()
+
+client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 
 REFUSAL_TEXT = "I could not find the answer in the indexed document context."
-
 
 def build_context(context_chunks):
     blocks = []
@@ -49,19 +55,17 @@ Question:
 Answer:
 """.strip()
 
-    response = ollama.chat(
-        model="qwen2.5:3b",
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
         ],
-        options={
-            "temperature": 0.0,
-            "num_predict": 160,
-        }
+        temperature=0.0,
+        max_tokens=160,
     )
 
-    answer = response["message"]["content"].strip()
+    answer = response.choices[0].message.content.strip()
 
     if not answer:
         return REFUSAL_TEXT
