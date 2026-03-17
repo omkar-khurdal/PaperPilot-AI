@@ -2,37 +2,38 @@
 
 🚀 **Live Demo:** [paperpilot-ai.streamlit.app](https://paperpilot-ai.streamlit.app)
 
-> Ask grounded questions from your PDF documents using local AI — no internet required.
+> Ask grounded questions from your PDF documents using AI — upload any PDF and get source-backed answers instantly.
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![Streamlit](https://img.shields.io/badge/UI-Streamlit-red)
 ![FAISS](https://img.shields.io/badge/VectorDB-FAISS-green)
-![Ollama](https://img.shields.io/badge/LLM-Ollama-purple)
+![Groq](https://img.shields.io/badge/LLM-Groq-orange)
 
 ---
 
-## 🎯 What is DocuMind?
+## 🎯 What is PaperPilot AI?
 
-DocuMind is a locally deployable AI-powered document assistant 
+PaperPilot AI is a deployable AI-powered document assistant
 built on a custom RAG (Retrieval-Augmented Generation) pipeline.
 
-Built from scratch — without LangChain or LlamaIndex — to deeply 
+Built from scratch — without LangChain or LlamaIndex — to deeply
 understand every component of a RAG system.
 
 ---
 
 ## ✨ Features
 
-- 📥 PDF ingestion with PyMuPDF
+- 📥 PDF upload directly from UI — no hardcoded files
 - ✂️ Sentence-aware overlap chunking
-- 🔍 Hybrid retrieval (dense + keyword)
-- 🔁 Cross-encoder reranking
-- 🧠 Query rewriting for follow-up questions
+- 🔍 Hybrid retrieval (dense + keyword scoring)
+- 🔁 Cross-encoder reranking for better relevance
+- 🧠 Query rewriting for conversational follow-ups
 - 🚫 Hallucination control via answer gating
 - 📊 Confidence scoring (High / Medium / Low)
 - 📑 Source attribution with page numbers
 - 💬 Conversational memory
 - 🎨 Clean Streamlit dark UI
+- ☁️ Deployed free on Streamlit Cloud
 
 ---
 
@@ -45,14 +46,14 @@ understand every component of a RAG system.
 | Embeddings | SentenceTransformers (all-MiniLM-L6-v2) |
 | Vector Database | FAISS |
 | Reranking | cross-encoder/ms-marco-MiniLM-L-6-v2 |
-| LLM | Ollama — Qwen2.5 3B |
+| LLM | Groq API — LLaMA 3.3 70B |
 | UI | Streamlit |
 
 ---
 
 ## 🧠 System Architecture
 ```
-PDF
+PDF Upload (UI)
 ↓
 Text Extraction (PyMuPDF)
 ↓
@@ -66,13 +67,13 @@ User Question
 ↓
 Query Rewriting
 ↓
-Hybrid Retrieval
+Hybrid Retrieval (Dense + Keyword)
 ↓
 Cross-Encoder Reranking
 ↓
 Answer Gating
 ↓
-Grounded Generation (Qwen2.5 3B)
+Grounded Generation (LLaMA 3.3 70B via Groq)
 ↓
 Confidence Score + Sources
 ↓
@@ -83,7 +84,7 @@ Streamlit UI
 
 ## 📂 Project Structure
 ```
-DocuMind/
+PaperPilot-AI/
 │
 ├── app/
 │   ├── chunking.py
@@ -106,8 +107,8 @@ DocuMind/
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/DocuMind.git
-cd DocuMind
+git clone https://github.com/omkar-khurdal/PaperPilot-AI.git
+cd PaperPilot-AI
 ```
 
 ### 2. Install dependencies
@@ -115,12 +116,12 @@ cd DocuMind
 pip install -r requirements.txt
 ```
 
-### 3. Install and start Ollama
-Download from: https://ollama.com
-```bash
-ollama pull qwen2.5:3b
-ollama run qwen2.5:3b
+### 3. Add your Groq API key
+Create a `.env` file in the project folder:
 ```
+GROQ_API_KEY=your_groq_api_key_here
+```
+Get a free API key at: https://console.groq.com
 
 ### 4. Run the app
 ```bash
@@ -144,16 +145,16 @@ Optimized for CPU-only machines.
 ## 🔮 Upcoming Features
 
 - [ ] Multi-PDF document support
-- [ ] Document upload via UI
 - [ ] Semantic caching
-- [ ] Deployment on Streamlit Cloud
 - [ ] Evaluation metrics (RAGAS)
+- [ ] Section-aware retrieval
+- [ ] Metadata filtering
 
 ---
 
 ## 👨‍💻 Author
 
-**Omkar Khurdal**
+**Omkar Khurdal**  
 AI & Data Science Engineering
-[GitHub](https://github.com/omkar-khurdal)
-[LinkedIn](https://www.linkedin.com/in/omkar-khurdal-738716252?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app)
+
+[GitHub](https://github.com/omkar-khurdal) • [LinkedIn](https://www.linkedin.com/in/omkar-khurdal-738716252)
