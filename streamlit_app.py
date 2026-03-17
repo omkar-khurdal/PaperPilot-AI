@@ -238,6 +238,16 @@ hr {
     font-size: 0.95rem;
 }
 
+.upload-hint {
+    background: rgba(94, 231, 255, 0.06);
+    border: 1px dashed rgba(94, 231, 255, 0.25);
+    border-radius: 16px;
+    padding: 1.2rem 1.4rem;
+    text-align: center;
+    color: #7a9bbf;
+    font-size: 0.95rem;
+    margin-top: 1rem;
+}
 </style>
 """
 
@@ -250,22 +260,14 @@ CACHE_DIR = Path(".rag_cache")
 CACHE_DIR.mkdir(exist_ok=True)
 
 
-def get_data_signature(data_folder="data"):
-    records = []
-
-    for file in sorted(os.listdir(data_folder)):
-        if file.endswith(".pdf"):
-            path = os.path.join(data_folder, file)
-            stat = os.stat(path)
-            records.append(f"{file}:{stat.st_mtime}:{stat.st_size}")
-
-    raw = "|".join(records)
+def get_data_signature(file_bytes, filename):
+    raw = f"{filename}:{len(file_bytes)}"
     return hashlib.md5(raw.encode("utf-8")).hexdigest()
 
 
 @st.cache_resource(show_spinner=False)
-def load_rag_pipeline(data_folder="data"):
-    signature = get_data_signature(data_folder)
+def load_rag_pipeline_from_bytes(file_bytes, filename):
+    signature = get_data_signature(file_bytes, filename)
     cache_path = CACHE_DIR / signature
     cache_path.mkdir(parents=True, exist_ok=True)
 
@@ -273,19 +275,10 @@ def load_rag_pipeline(data_folder="data"):
     index_file = cache_path / "faiss.index"
     meta_file = cache_path / "meta.pkl"
 
-    pdf_files = []
-    pages = []
-
-    for file in sorted(os.listdir(data_folder)):
-        if file.endswith(".pdf"):
-            pdf_files.append(file)
-            pdf_path = os.path.join(data_folder, file)
-            extracted_pages = extract_text_from_pdf(pdf_path)
-
-            for page in extracted_pages:
-                page["source"] = file
-
-            pages.extend(extracted_pages)
+    # Save uploaded file temporarily
+    temp_path = cache_path / filename
+    with open(temp_path, "wb") as f:
+        f.write(file_bytes)
 
     if chunks_file.exists() and index_file.exists() and meta_file.exists():
         with open(chunks_file, "rb") as f:
@@ -299,10 +292,14 @@ def load_rag_pipeline(data_folder="data"):
         return {
             "chunks": chunks,
             "index": index,
-            "pdf_files": pdf_files,
+            "pdf_files": [filename],
             "page_count": meta["page_count"],
             "chunk_count": meta["chunk_count"],
         }
+
+    pages = extract_text_from_pdf(str(temp_path))
+    for page in pages:
+        page["source"] = filename
 
     chunks = chunk_text(pages)
     embeddings = create_embeddings(chunks)
@@ -325,36 +322,22 @@ def load_rag_pipeline(data_folder="data"):
     return {
         "chunks": chunks,
         "index": index,
-        "pdf_files": pdf_files,
+        "pdf_files": [filename],
         "page_count": len(pages),
         "chunk_count": len(chunks),
     }
 
+
 def clean_document_name(filename: str) -> str:
-    """
-    Convert ugly PDF filename into cleaner display name.
-    Example:
-    MACHINE LEARNING(R17A0534).pdf -> Machine Learning
-    """
     if not filename:
         return "Document"
-
-    name = filename.rsplit(".", 1)[0]
-
-    # remove bracket/codes like (R17A0534)
     import re
+    name = filename.rsplit(".", 1)[0]
     name = re.sub(r"\([^)]*\)", "", name)
-
-    # replace underscores / hyphens
     name = name.replace("_", " ").replace("-", " ")
-
-    # collapse spaces
     name = re.sub(r"\s+", " ", name).strip()
-
-    # title case if fully uppercase-ish
     if name.isupper():
         name = name.title()
-
     return name if name else "Document"
 
 
@@ -365,12 +348,7 @@ def truncate_text(text: str, max_len: int = 28) -> str:
 
 
 def get_dynamic_prompt_suggestions(doc_name: str):
-    """
-    Generic but adaptable starter prompts.
-    Safe for changing PDFs.
-    """
     clean_name = clean_document_name(doc_name)
-
     return [
         f"What is the main topic of {clean_name}?",
         "Summarize the key concepts in this document.",
@@ -392,27 +370,22 @@ def confidence_class(label):
 
 def build_source_cards(results, debug=False):
     source_items = []
-
     for item in results:
         preview = item["text"][:260].strip()
         if len(item["text"]) > 260:
             preview += "..."
-
         data = {
             "label": f"{item['source']}",
             "page": f"Page {item['page']}",
             "preview": preview,
         }
-
         if debug:
             data["score"] = f"{item.get('score', 0):.4f}"
             data["dense"] = f"{item.get('dense_score', 0):.4f}"
             data["sparse"] = f"{item.get('sparse_score', 0):.4f}"
             if "rerank_score" in item:
                 data["rerank"] = f"{item['rerank_score']:.4f}"
-
         source_items.append(data)
-
     return source_items
 
 
@@ -429,32 +402,36 @@ def render_sources(sources, debug=False):
                 """,
                 unsafe_allow_html=True,
             )
-
             if debug and "score" in item:
-                extra = (
-                    f"Final: {item['score']} | Dense: {item['dense']} | Sparse: {item['sparse']}"
-                )
+                extra = f"Final: {item['score']} | Dense: {item['dense']} | Sparse: {item['sparse']}"
                 if "rerank" in item:
                     extra += f" | Rerank: {item['rerank']}"
                 st.caption(extra)
 
 
-def render_sidebar(stats):
-    document_name = stats["pdf_files"][0] if stats["pdf_files"] else "No document"
-    display_name = clean_document_name(document_name)
+def render_sidebar(stats, uploaded_file_name):
+    display_name = clean_document_name(uploaded_file_name)
     short_display_name = truncate_text(display_name, max_len=24)
 
     with st.sidebar:
         st.markdown("## 📄 Current Document")
+
+        # File uploader in sidebar
+        uploaded_file = st.file_uploader(
+            "Upload PDF",
+            type="pdf",
+            key="pdf_uploader"
+        )
+
         st.markdown(
             f"""
-            <div class="panel" title="{document_name}">
+            <div class="panel" title="{uploaded_file_name}">
                 <div class="metric-label">Active PDF</div>
                 <div class="metric-value">{short_display_name}</div>
             </div>
             """,
             unsafe_allow_html=True,
-)
+        )
 
         col1, col2 = st.columns(2)
         with col1:
@@ -482,7 +459,7 @@ def render_sidebar(stats):
         with st.expander("Advanced options", expanded=False):
             debug_mode = st.checkbox("Debug mode", value=False)
             if debug_mode:
-                st.caption(f"Full filename: {document_name}")
+                st.caption(f"Full filename: {uploaded_file_name}")
 
         if st.button("🗑 Clear chat", use_container_width=True):
             st.session_state.chat_history = []
@@ -494,7 +471,7 @@ def render_sidebar(stats):
             unsafe_allow_html=True,
         )
 
-    return debug_mode
+    return debug_mode, uploaded_file
 
 
 def render_hero():
@@ -506,7 +483,7 @@ def render_hero():
                 Ask grounded questions from your document and get concise answers with source-backed evidence.
             </div>
             <div class="pills">
-                <span class="pill">Local</span>
+                <span class="pill">Groq</span>
                 <span class="pill">Grounded</span>
                 <span class="pill">Single-PDF</span>
             </div>
@@ -515,11 +492,11 @@ def render_hero():
         unsafe_allow_html=True,
     )
 
+
 def render_welcome_state(doc_name: str):
     suggestions = get_dynamic_prompt_suggestions(doc_name)
-
     st.markdown(
-    """
+        """
         <div class="welcome-card">
             <div class="welcome-title">👋 Welcome</div>
             <div class="welcome-text">
@@ -529,7 +506,6 @@ def render_welcome_state(doc_name: str):
         """,
         unsafe_allow_html=True,
     )
-
     st.markdown(
         """
         <div class="section-title" style="font-size:1.05rem; margin-top:0.4rem; margin-bottom:0.55rem;">
@@ -538,12 +514,24 @@ def render_welcome_state(doc_name: str):
         """,
         unsafe_allow_html=True,
     )
-
     cols = st.columns(2)
     for i, suggestion in enumerate(suggestions):
         with cols[i % 2]:
             if st.button(suggestion, key=f"starter_{i}", use_container_width=True):
                 st.session_state.prefill_question = suggestion
+
+
+def render_upload_prompt():
+    render_hero()
+    st.markdown(
+        """
+        <div class="upload-hint">
+            📂 Upload a PDF from the sidebar to get started.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 # -----------------------------
 # Session state
@@ -551,19 +539,102 @@ def render_welcome_state(doc_name: str):
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
+if "prefill_question" not in st.session_state:
+    st.session_state.prefill_question = ""
+
+if "current_pdf" not in st.session_state:
+    st.session_state.current_pdf = None
+
+# -----------------------------
+# Sidebar upload (runs first)
+# -----------------------------
+with st.sidebar:
+    st.markdown("## 📄 Current Document")
+    uploaded_file = st.file_uploader("Upload PDF", type="pdf", key="pdf_uploader")
+
+# -----------------------------
+# No PDF uploaded yet
+# -----------------------------
+if uploaded_file is None:
+    render_upload_prompt()
+    st.stop()
+
+# -----------------------------
+# PDF uploaded - reset chat if new PDF
+# -----------------------------
+if st.session_state.current_pdf != uploaded_file.name:
+    st.session_state.chat_history = []
+    clear_history()
+    st.session_state.current_pdf = uploaded_file.name
+
 # -----------------------------
 # Load pipeline
 # -----------------------------
+file_bytes = uploaded_file.read()
+
 try:
-    stats = load_rag_pipeline("data")
+    with st.spinner("Processing document..."):
+        stats = load_rag_pipeline_from_bytes(file_bytes, uploaded_file.name)
 except Exception as e:
-    st.error(f"Error loading document: {e}")
+    st.error(f"Error processing document: {e}")
     st.stop()
 
-debug_mode = render_sidebar(stats)
+# -----------------------------
+# Render sidebar stats
+# -----------------------------
+with st.sidebar:
+    st.markdown(
+        f"""
+        <div class="panel" title="{uploaded_file.name}">
+            <div class="metric-label">Active PDF</div>
+            <div class="metric-value">{truncate_text(clean_document_name(uploaded_file.name), max_len=24)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(
+            f"""
+            <div class="panel">
+                <div class="metric-label">Pages</div>
+                <div class="metric-value">{stats['page_count']}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with col2:
+        st.markdown(
+            f"""
+            <div class="panel">
+                <div class="metric-label">Chunks</div>
+                <div class="metric-value">{stats['chunk_count']}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("### 🛠 Options")
+    with st.expander("Advanced options", expanded=False):
+        debug_mode = st.checkbox("Debug mode", value=False)
+
+    if st.button("🗑 Clear chat", use_container_width=True):
+        st.session_state.chat_history = []
+        clear_history()
+        st.rerun()
+
+    st.markdown(
+        "<div class='small-muted' style='margin-top:0.75rem;'>Single-document grounded Q&A with local retrieval and citations.</div>",
+        unsafe_allow_html=True,
+    )
+
+# -----------------------------
+# Main UI
+# -----------------------------
 render_hero()
 
-document_name = stats["pdf_files"][0] if stats["pdf_files"] else "document"
+document_name = uploaded_file.name
 
 if not st.session_state.chat_history:
     render_welcome_state(document_name)
@@ -578,7 +649,6 @@ for message in st.session_state.chat_history:
                 f"<span class='{confidence_class(message.get('confidence', 'Low'))}'>{message.get('confidence', 'Low')} confidence</span>",
                 unsafe_allow_html=True,
             )
-
             if message["content"].strip() == REFUSAL_TEXT:
                 st.markdown(
                     """
@@ -594,27 +664,18 @@ for message in st.session_state.chat_history:
                     f"<div class='answer-card'>{message['content']}</div>",
                     unsafe_allow_html=True,
                 )
-
             if debug_mode and message.get("rewritten_query"):
                 st.caption(f"Rewritten query: {message['rewritten_query']}")
-
             if message.get("sources"):
                 render_sources(message["sources"], debug=debug_mode)
         else:
             st.markdown(message["content"])
-
         st.markdown("<div class='chat-spacer'></div>", unsafe_allow_html=True)
 
 # -----------------------------
 # Chat input
 # -----------------------------
-if "prefill_question" not in st.session_state:
-    st.session_state.prefill_question = ""
-
-question = st.chat_input(
-    "Ask a question about your PDF...",
-    key="main_chat_input",
-)
+question = st.chat_input("Ask a question about your PDF...", key="main_chat_input")
 
 if not question and st.session_state.prefill_question:
     question = st.session_state.prefill_question
@@ -674,18 +735,11 @@ if question:
     add_user_message(question)
     add_ai_message(answer)
 
-    st.session_state.chat_history.append(
-        {
-            "role": "user",
-            "content": question,
-        }
-    )
-    st.session_state.chat_history.append(
-        {
-            "role": "assistant",
-            "content": answer,
-            "sources": sources,
-            "confidence": confidence,
-            "rewritten_query": rewritten_query,
-        }
-    )
+    st.session_state.chat_history.append({"role": "user", "content": question})
+    st.session_state.chat_history.append({
+        "role": "assistant",
+        "content": answer,
+        "sources": sources,
+        "confidence": confidence,
+        "rewritten_query": rewritten_query,
+    })
