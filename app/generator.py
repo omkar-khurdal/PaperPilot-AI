@@ -1,11 +1,13 @@
 import os
 
+import streamlit as st
 from dotenv import load_dotenv
 from groq import Groq
 
 load_dotenv()
 
-client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
+api_key = os.environ.get("GROQ_API_KEY") or st.secrets.get("GROQ_API_KEY")
+client = Groq(api_key=api_key)
 
 REFUSAL_TEXT = "I could not find the answer in the indexed document context."
 
