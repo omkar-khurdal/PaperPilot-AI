@@ -116,20 +116,28 @@ html, body, .stApp {
     font-family: 'Inter', sans-serif !important;
 }
 
-/* Hide the 200MB text specifically */
-[data-testid="stFileUploaderDropzoneInstructions"] div small {
+[data-testid="stFileUploaderDropzoneInstructions"] div small,
+[data-testid="stFileUploaderDropzoneInstructions"] div span,
+[data-testid="stFileUploaderDropzoneInstructions"] small,
+[data-testid="stFileUploaderDropzoneInstructions"] span,
+[data-testid="stFileUploaderDropzone"] small,
+[data-testid="stFileUploaderDropzone"] span:not(button span) {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+[data-testid="stFileUploaderDropzoneInstructions"]::after {
+    content: "";
+    display: none;
+}
+
+/* Nuclear option — hide everything inside dropzone instructions */
+[data-testid="stFileUploaderDropzoneInstructions"] * {
     display: none !important;
 }
 
-/* Replace with custom text via CSS */
-[data-testid="stFileUploaderDropzoneInstructions"]::after {
-    content: "PDF only · Max 50MB";
-    color: var(--text-dim);
-    font-size: 0.75rem;
-    font-family: 'Inter', sans-serif;
-    display: block;
-    text-align: center;
-    margin-top: 0.3rem;
+[data-testid="stFileUploaderDropzoneInstructions"] {
+    display: none !important;
 }
 
 /* Browse files button */
