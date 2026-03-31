@@ -116,28 +116,15 @@ html, body, .stApp {
     font-family: 'Inter', sans-serif !important;
 }
 
-[data-testid="stFileUploaderDropzoneInstructions"] div small,
-[data-testid="stFileUploaderDropzoneInstructions"] div span,
-[data-testid="stFileUploaderDropzoneInstructions"] small,
-[data-testid="stFileUploaderDropzoneInstructions"] span,
-[data-testid="stFileUploaderDropzone"] small,
-[data-testid="stFileUploaderDropzone"] span:not(button span) {
-    display: none !important;
-    visibility: hidden !important;
-}
-
+/* Replace with custom text via CSS */
 [data-testid="stFileUploaderDropzoneInstructions"]::after {
-    content: "";
-    display: none;
-}
-
-/* Nuclear option — hide everything inside dropzone instructions */
-[data-testid="stFileUploaderDropzoneInstructions"] * {
-    display: none !important;
-}
-
-[data-testid="stFileUploaderDropzoneInstructions"] {
-    display: none !important;
+    content: "PDF only · Max 20MB";
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    font-family: 'Inter', sans-serif;
+    display: block;
+    text-align: center;
+    margin-top: 0.3rem;
 }
 
 /* Browse files button */
