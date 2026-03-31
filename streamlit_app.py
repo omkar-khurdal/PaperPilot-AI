@@ -110,21 +110,34 @@ html, body, .stApp {
     background: transparent !important;
 }
 
-[data-testid="stFileUploaderDropzoneInstructions"] div span {
-    color: var(--text-muted) !important;
-    font-size: 0.82rem !important;
-    font-family: 'Inter', sans-serif !important;
+/* Hide ALL default uploader instruction text */
+[data-testid="stFileUploaderDropzoneInstructions"] {
+    font-size: 0 !important;
 }
 
-/* Replace with custom text via CSS */
-[data-testid="stFileUploaderDropzoneInstructions"]::after {
-    content: "PDF only · Max 20MB";
-    color: var(--text-dim);
-    font-size: 0.75rem;
-    font-family: 'Inter', sans-serif;
+/* Rebuild only the text you want */
+[data-testid="stFileUploaderDropzoneInstructions"] div {
+    font-size: 0 !important;
+}
+
+[data-testid="stFileUploaderDropzoneInstructions"]::before {
+    content: "Drop your PDF here";
     display: block;
     text-align: center;
-    margin-top: 0.3rem;
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+    margin-bottom: 0.3rem;
+}
+
+[data-testid="stFileUploaderDropzoneInstructions"]::after {
+    content: "PDF only";
+    display: block;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    font-family: 'Inter', sans-serif;
+    margin-top: 0.2rem;
 }
 
 /* Browse files button */
