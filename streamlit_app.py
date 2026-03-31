@@ -120,6 +120,75 @@ html, body, .stApp {
     font-size: 0 !important;
 }
 
+
+
+/* ── Clean uploader block ── */
+.st-key-clean_pdf_uploader {
+    margin-top: 0.2rem;
+}
+
+.st-key-clean_pdf_uploader [data-testid="stFileUploader"] {
+    background: transparent !important;
+}
+
+.st-key-clean_pdf_uploader [data-testid="stFileUploader"] > div {
+    background: linear-gradient(135deg, var(--bg-surface), var(--bg-raised)) !important;
+    border: 1px solid var(--border-bright) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 0.8rem 0.9rem !important;
+    min-height: auto !important;
+}
+
+/* Hide all default drag-drop / limit / helper text */
+.st-key-clean_pdf_uploader [data-testid="stFileUploaderDropzone"],
+.st-key-clean_pdf_uploader [data-testid="stFileUploaderDropzoneInstructions"],
+.st-key-clean_pdf_uploader small,
+.st-key-clean_pdf_uploader span,
+.st-key-clean_pdf_uploader p {
+    font-size: 0 !important;
+    line-height: 0 !important;
+}
+
+/* Remove extra empty space created by hidden text */
+.st-key-clean_pdf_uploader [data-testid="stFileUploaderDropzone"] > div {
+    padding: 0 !important;
+    gap: 0 !important;
+}
+
+/* Keep only the button visible */
+.st-key-clean_pdf_uploader button {
+    width: 100% !important;
+    background: rgba(56,189,248,0.10) !important;
+    border: 1px solid rgba(56,189,248,0.28) !important;
+    color: var(--accent) !important;
+    border-radius: 12px !important;
+    font-size: 0.88rem !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    padding: 0.7rem 1rem !important;
+    min-height: auto !important;
+}
+
+.st-key-clean_pdf_uploader button:hover {
+    background: rgba(56,189,248,0.16) !important;
+    border-color: var(--accent) !important;
+}
+
+/* Uploaded filename styling */
+.st-key-clean_pdf_uploader [data-testid="stFileUploaderFile"] {
+    background: transparent !important;
+    border: none !important;
+    padding-top: 0.55rem !important;
+}
+
+.st-key-clean_pdf_uploader [data-testid="stFileUploaderFileName"] {
+    color: var(--text-muted) !important;
+    font-size: 0.8rem !important;
+}
+
+
+
+
 [data-testid="stFileUploaderDropzoneInstructions"]::before {
     content: "Drop your PDF here";
     display: block;
@@ -813,11 +882,24 @@ with st.sidebar:
     )
 
     # Upload
-    st.markdown("<div class='upload-label'>📂 Upload Document</div>", unsafe_allow_html=True)
+    # Upload
+    st.markdown("<div class='upload-label'>📂 Upload PDF</div>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="doc-card" style="margin-top:0.4rem; margin-bottom:0.7rem;">
+            <div class="doc-label">Document Input</div>
+            <div class="welcome-text" style="font-size:0.8rem;">
+                Upload one PDF and start asking grounded questions.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     uploaded_file = st.file_uploader(
-        "upload",
+        "Choose PDF",
         type="pdf",
-        key="pdf_uploader",
+        key="clean_pdf_uploader",
         label_visibility="collapsed",
     )
 
