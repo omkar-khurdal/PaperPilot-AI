@@ -199,15 +199,6 @@ html, body, .stApp {
     margin-bottom: 0.3rem;
 }
 
-[data-testid="stFileUploaderDropzoneInstructions"]::after {
-    content: "PDF only";
-    display: block;
-    text-align: center;
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    font-family: 'Inter', sans-serif;
-    margin-top: 0.2rem;
-}
 
 /* Browse files button */
 [data-testid="stFileUploader"] button {
