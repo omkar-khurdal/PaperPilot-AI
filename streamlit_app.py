@@ -139,23 +139,25 @@ html, body, .stApp {
     min-height: auto !important;
 }
 
-/* Hide all default drag-drop / limit / helper text */
-.st-key-clean_pdf_uploader [data-testid="stFileUploaderDropzone"],
 .st-key-clean_pdf_uploader [data-testid="stFileUploaderDropzoneInstructions"],
-.st-key-clean_pdf_uploader small,
-.st-key-clean_pdf_uploader span,
-.st-key-clean_pdf_uploader p {
+.st-key-clean_pdf_uploader [data-testid="stFileUploaderDropzoneInstructions"] small,
+.st-key-clean_pdf_uploader [data-testid="stFileUploaderDropzoneInstructions"] p,
+.st-key-clean_pdf_uploader [data-testid="stFileUploaderDropzoneInstructions"] span {
     font-size: 0 !important;
     line-height: 0 !important;
 }
 
-/* Remove extra empty space created by hidden text */
+.st-key-clean_pdf_uploader [data-testid="stFileUploaderDropzoneInstructions"]::before,
+.st-key-clean_pdf_uploader [data-testid="stFileUploaderDropzoneInstructions"]::after {
+    content: none !important;
+    display: none !important;
+}
+
 .st-key-clean_pdf_uploader [data-testid="stFileUploaderDropzone"] > div {
     padding: 0 !important;
     gap: 0 !important;
 }
 
-/* Keep only the button visible */
 .st-key-clean_pdf_uploader button {
     width: 100% !important;
     background: rgba(56,189,248,0.10) !important;
@@ -174,7 +176,6 @@ html, body, .stApp {
     border-color: var(--accent) !important;
 }
 
-/* Uploaded filename styling */
 .st-key-clean_pdf_uploader [data-testid="stFileUploaderFile"] {
     background: transparent !important;
     border: none !important;
@@ -185,7 +186,6 @@ html, body, .stApp {
     color: var(--text-muted) !important;
     font-size: 0.8rem !important;
 }
-
 
 
 
