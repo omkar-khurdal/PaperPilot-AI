@@ -21,7 +21,7 @@ def build_context(context_chunks):
     return "\n\n".join(blocks)
 
 
-def generate_answer(question, context_chunks):
+def generate_answer(question, context_chunks, max_tokens=160):
     if not context_chunks:
         return REFUSAL_TEXT
 
@@ -61,7 +61,7 @@ Answer:
             {"role": "user", "content": user_prompt},
         ],
         temperature=0.0,
-        max_tokens=160,
+        max_tokens=max_tokens,
     )
 
     answer = response.choices[0].message.content.strip()
